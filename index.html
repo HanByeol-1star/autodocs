@@ -21,7 +21,6 @@
     <button id="btnDemo" class="ghost-btn" type="button">예시 채우기</button>
     <button id="btnPrint" class="ghost-btn" type="button">인쇄 / PDF</button>
     <button id="btnReset" class="ghost-btn" type="button">초기화</button>
-    <button id="btnSettings" class="ghost-btn" type="button">⚙ 설정</button>
   </div>
 </header>
 
@@ -162,24 +161,7 @@
 
 </main>
 
-<div class="modal-backdrop" id="settingsModal" hidden>
-  <div class="modal">
-    <h2>설정</h2>
-    <label class="field-label" for="apiKeyInput">OpenRouter API 키</label>
-    <input type="password" id="apiKeyInput" placeholder="sk-or-v1-..." autocomplete="off">
-    <p class="help">
-      키는 이 브라우저(localStorage)에만 저장되고 외부 서버로 전송되지 않습니다.
-      무료 가입 후 <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys ↗</a>에서 발급하세요.
-      변환에는 최저가 모델이 사용되어 건당 몇 원 수준의 비용이 듭니다.
-    </p>
-    <div class="modal-actions">
-      <button id="btnSaveKey" class="primary-btn" type="button">저장</button>
-      <button id="btnClearKey" class="ghost-btn" type="button">키 삭제</button>
-      <button id="btnCloseSettings" class="ghost-btn" type="button">닫기</button>
-    </div>
-  </div>
-</div>
-
+<script src="js/config.js"></script>
 <script src="js/form-mapper.js"></script>
 <script src="js/openrouter.js"></script>
 <script src="js/speech.js"></script>

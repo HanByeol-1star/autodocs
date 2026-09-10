@@ -17,26 +17,16 @@ const els={
   overlay:$("#sheetOverlay"),
   demo:$("#btnDemo"),
   print:$("#btnPrint"),
-  reset:$("#btnReset"),
-  settings:$("#btnSettings"),
-  modal:$("#settingsModal"),
-  apiKey:$("#apiKeyInput"),
-  saveKey:$("#btnSaveKey"),
-  clearKey:$("#btnClearKey"),
-  closeSettings:$("#btnCloseSettings")
+  reset:$("#btnReset")
 };
 
-const KEY_STORE="or_api_key";
-const MODEL_STORE="or_model_choice";
+els.model.value=localStorage.getItem("or_model_choice")||"auto";
 
-let apiKey=localStorage.getItem(KEY_STORE)||"";
 let imageData=null;
 let recording=false;
 let mediaStream=null;
 let mediaRecorder=null;
 let chunks=[];
-
-els.model.value=localStorage.getItem(MODEL_STORE)||"auto";
 
 function setStatus(kind,msg){
   els.status.className="status "+kind;
@@ -58,7 +48,7 @@ function setBusy(b){
 
 const SR_ERRORS={
   "not-allowed":"마이크 권한이 거부되었습니다. 브라우저 주소창에서 마이크 권한을 허용해 주세요.",
-  "service-not-allowed":"음성 인식 서비스 사용이 차단되었습니다. 권한을 확인해 주세요.",
+  "service-not-allowed":"음성 인식 서비스 사용이 차단되었습니다.",
   "no-speech":"인식된 음성이 없습니다.",
   "network":"네트워크 문제로 음성 인식에 실패했습니다.",
   "audio-capture":"마이크를 찾을 수 없습니다.",
@@ -129,9 +119,9 @@ async function startRecording(){
     mediaStream.getTracks().forEach(function(t){t.stop();});
     const blob=new Blob(chunks,{type:mediaRecorder.mimeType||"audio/webm"});
     setBusy(true);
-    setStatus("info","녹음을 텍스트로 변환하는 중… (OpenRouter 음성 모델)");
+    setStatus("info","녹음을 텍스트로 변환하는 중…");
     try{
-      const text=await QuoteAI.transcribeAudio(apiKey,blob);
+      const text=await QuoteAI.transcribeAudio(blob);
       if(!text){
         setStatus("error","인식된 음성이 없습니다. 다시 시도해 주세요.");
       }else{
@@ -166,11 +156,6 @@ els.mic.addEventListener("click",function(){
     setStatus("error","이 브라우저는 음성 입력을 지원하지 않습니다. Chrome 또는 Edge를 사용해 주세요.");
     return;
   }
-  if(!apiKey){
-    openSettings();
-    setStatus("error","이 브라우저는 실시간 음성 인식을 지원하지 않아 OpenRouter 음성 모델을 사용합니다. API 키를 먼저 설정해 주세요.");
-    return;
-  }
   if(recording)stopRecording();
   else startRecording();
 });
@@ -203,7 +188,7 @@ els.clearInput.addEventListener("click",function(){
 });
 
 els.model.addEventListener("change",function(){
-  localStorage.setItem(MODEL_STORE,els.model.value);
+  localStorage.setItem("or_model_choice",els.model.value);
 });
 
 async function convert(){
@@ -212,17 +197,11 @@ async function convert(){
     setStatus("error","내용을 입력하거나 🎤 음성 / 🖼 이미지로 전달해 주세요.");
     return;
   }
-  if(!apiKey){
-    openSettings();
-    setStatus("error","OpenRouter API 키가 필요합니다. 키를 저장한 뒤 다시 시도하세요.");
-    return;
-  }
   setBusy(true);
   hideStatus();
   const t0=performance.now();
   try{
     const result=await QuoteAI.convertToQuote({
-      apiKey:apiKey,
       choice:els.model.value,
       text:text,
       image:imageData
@@ -232,16 +211,12 @@ async function convert(){
     if(filled.filledCount===0&&filled.items===0){
       setStatus("error","견적 관련 정보를 찾지 못했습니다. 품목·수량·단가·공급자 정보 등을 포함해 다시 입력해 주세요.");
     }else{
-      let msg="✅ 변환 완료 · "+result.modelUsed+" · "+sec+"초";
+      let msg="✅ 변환 완료 · "+(result.modelUsed||"AI")+" · "+sec+"초";
       if(result.fallbackReason)msg+=" (대체 모델 사용: "+result.fallbackReason+")";
       setStatus("success",msg);
     }
   }catch(err){
-    if(err&&err.status===401){
-      setStatus("error","API 키가 올바르지 않습니다. ⚙ 설정에서 키를 확인해 주세요.");
-    }else{
-      setStatus("error","변환 실패: "+(err&&err.message||"알 수 없는 오류"));
-    }
+    setStatus("error","변환 실패: "+(err&&err.message||"알 수 없는 오류"));
   }finally{
     setBusy(false);
   }
@@ -278,7 +253,7 @@ const DEMO={
 
 els.demo.addEventListener("click",function(){
   QuoteForm.apply(DEMO);
-  setStatus("info","예시 데이터로 견적서를 채웠습니다. API 키 없이 화면과 인쇄를 확인할 수 있습니다.");
+  setStatus("info","예시 데이터로 견적서를 채웠습니다.");
 });
 
 els.print.addEventListener("click",function(){window.print();});
@@ -292,36 +267,7 @@ els.reset.addEventListener("click",function(){
   hideStatus();
 });
 
-function openSettings(){
-  els.apiKey.value=apiKey;
-  els.modal.hidden=false;
-  els.apiKey.focus();
-}
-function closeSettings(){els.modal.hidden=true;}
-
-els.settings.addEventListener("click",openSettings);
-els.closeSettings.addEventListener("click",closeSettings);
-els.modal.addEventListener("click",function(e){if(e.target===els.modal)closeSettings();});
-document.addEventListener("keydown",function(e){if(e.key==="Escape")closeSettings();});
-
-els.saveKey.addEventListener("click",function(){
-  apiKey=els.apiKey.value.trim();
-  if(apiKey)localStorage.setItem(KEY_STORE,apiKey);
-  else localStorage.removeItem(KEY_STORE);
-  closeSettings();
-  setStatus("info",apiKey?"API 키가 저장되었습니다.":"API 키가 삭제되었습니다.");
-});
-
-els.clearKey.addEventListener("click",function(){
-  apiKey="";
-  localStorage.removeItem(KEY_STORE);
-  els.apiKey.value="";
-  setStatus("info","API 키가 삭제되었습니다.");
-});
-
 QuoteForm.reset();
 
-if(!apiKey){
-  setStatus("info","시작 전 ⚙ 설정에서 OpenRouter API 키를 등록하세요. 최저가 모델이 자동 선택됩니다.");
-}
+setStatus("info","텍스트·음성·이미지 중 편한 방법으로 내용을 전달하고 ✨ 변환을 누르세요.");
 })();

@@ -1,0 +1,6 @@
+name = "autodocs-api"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+[vars]
+ALLOWED_ORIGINS = "https://hanbyeol-1star.github.io,http://localhost:8080,http://127.0.0.1:8080"
