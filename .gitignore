@@ -5,3 +5,8 @@ node_modules/
 .vscode/
 .idea/
 .wrangler/
+
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example

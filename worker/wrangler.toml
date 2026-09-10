@@ -3,4 +3,4 @@ main = "worker.js"
 compatibility_date = "2025-01-01"
 
 [vars]
-ALLOWED_ORIGINS = "https://hanbyeol-1star.github.io,http://localhost:8080,http://127.0.0.1:8080"
+ALLOWED_ORIGINS = "https://autodocs.hanbyeol-1star.workers.dev,https://hanbyeol-1star.github.io,http://localhost:8080,http://127.0.0.1:8080"
